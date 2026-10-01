@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OODK Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script data-goatcounter="https://rmutomhusdk.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#111;color:#e0e0e0;font-family:'DM Sans',sans-serif}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:#1a1a1a}::-webkit-scrollbar-thumb{background:#555;border-radius:3px}::-webkit-scrollbar-thumb:hover{background:#777}
+.hdr{background:linear-gradient(135deg,#0a0a0a,#1a1a1a);border-bottom:1px solid #2a2a2a;padding:20px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.hdr-lbl{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:#666;margin-bottom:4px;font-family:'DM Mono',monospace}
+.hdr h1{font-size:22px;font-weight:700;color:#fff}
+.test-pill{display:inline-block;margin-left:10px;padding:3px 10px;border-radius:20px;background:rgba(205,92,92,.12);border:1px solid #cd5c5c;color:#cd5c5c;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;vertical-align:middle}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{padding:7px 16px;border-radius:20px;border:1px solid #333;background:transparent;color:#888;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.tab.active{border-color:#555;background:#2a2a2a;color:#fff}.tab:hover{border-color:#555}
+.tp{display:none}.tp.active{display:block}
+.flt{padding:14px 32px;background:#141414;border-bottom:1px solid #222;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.flt-lbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1.5px;font-family:'DM Mono',monospace}
+.flt-sel{background:#1e1e1e;border:1px solid #333;border-radius:8px;color:#e0e0e0;padding:5px 10px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;outline:none;max-width:220px}
+.flt-sel:focus{border-color:#555}
+#dPG{font-family:'DM Mono',monospace;font-size:11px}
+.cnt{padding:24px 32px;max-width:1440px;margin:0 auto}
+.kpi-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:24px}
+.kpi{background:#1a1a1a;border-radius:12px;padding:16px 18px;border:1px solid #2a2a2a}
+.kpi-l{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#666;margin-bottom:6px;font-family:'DM Mono',monospace}
+.kpi-v{font-size:20px;font-weight:700;color:#fff;margin-bottom:3px}
+.kpi-s{font-size:11px;color:#555}
+.card{background:#1a1a1a;border-radius:12px;padding:22px;border:1px solid #2a2a2a;margin-bottom:20px}
+.card-t{font-size:13px;font-weight:600;color:#fff;margin-bottom:4px}
+.card-s{font-size:11px;color:#555;margin-bottom:18px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+@media(max-width:900px){.row2{grid-template-columns:1fr}}
+.cc{position:relative;height:300px}
+.cc-tall{position:relative;height:420px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+th{text-align:right;padding:8px 12px;border-bottom:1px solid #333;color:#666;font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono',monospace}
+th:first-child{text-align:left}
+td{padding:8px 12px;border-bottom:1px solid #1f1f1f;text-align:right;color:#aaa;font-family:'DM Mono',monospace;font-size:11px}
+td:first-child{text-align:left;color:#ccc;font-weight:500;font-family:'DM Sans',sans-serif;font-size:12px}
+tr:hover td{background:rgba(255,255,255,.02)}
+.tr-tot td{border-top:2px solid #444;color:#fff;font-weight:600}.tr-tot td:first-child{font-weight:700}
+.ox{overflow-x:auto}
+.pie-l{display:flex;align-items:center;gap:16px}.pie-l canvas{max-width:55%}
+.sh-lg{display:flex;flex-direction:column;gap:7px;padding-left:8px}
+.sh-i{display:flex;align-items:center;gap:8px}.sh-d{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.sh-n{font-size:11px;color:#aaa;flex:1}.sh-p{font-size:12px;font-weight:600;color:#fff;font-family:'DM Mono',monospace}
+.pg-list{max-height:460px;overflow-y:auto;border:1px solid #222;border-radius:8px}
+.pg-row{display:flex;align-items:center;gap:10px;padding:7px 14px;border-bottom:1px solid #1a1a1a}
+.pg-row:last-child{border-bottom:none}
+.pg-row:hover{background:rgba(255,255,255,.02)}
+.pg-rank{font-size:10px;color:#555;font-family:'DM Mono',monospace;width:22px;flex-shrink:0}
+.pg-name{font-size:12px;color:#ccc;flex:1}
+.pg-val{font-size:12px;font-weight:600;color:#fff;font-family:'DM Mono',monospace;white-space:nowrap}
+.search-box{background:#1e1e1e;border:1px solid #333;border-radius:8px;color:#e0e0e0;padding:8px 14px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;width:260px;max-width:100%}
+.search-box:focus{border-color:#555}.search-box::placeholder{color:#555}
+.adv-list{max-height:280px;overflow-y:auto;background:#151515;border:1px solid #2a2a2a;border-radius:8px;margin-top:8px}
+.adv-item{padding:8px 14px;cursor:pointer;font-size:12px;color:#aaa;border-bottom:1px solid #1a1a1a;transition:background .15s;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.adv-item:hover{background:#222;color:#fff}.adv-item.sel{background:#2a2a2a;color:#fff;font-weight:600}
+.adv-item .adv-sp{color:#666;font-family:'DM Mono',monospace;font-size:11px;white-space:nowrap;flex-shrink:0}
+.footer{text-align:center;padding:16px 0 8px;border-top:1px solid #222;margin-top:12px}
+.footer span{font-size:10px;color:#444;font-family:'DM Mono',monospace}
+.gb{display:flex;gap:20px;justify-content:center;align-items:flex-end;padding:20px 0;flex-wrap:wrap}
+.gc{text-align:center;flex:1;max-width:200px;min-width:90px}
+.gd{font-size:12px;font-weight:600;margin-bottom:8px;font-family:'DM Mono',monospace}
+.gbar{border-radius:8px 8px 0 0;margin:0 auto;width:80%;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px}
+.gbar span{font-size:12px;font-weight:700;color:#111;font-family:'DM Mono',monospace}
+.gy{margin-top:8px;font-size:14px;font-weight:600;color:#fff}
+.mp{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.mp-btn{padding:4px 9px;border-radius:6px;border:1px solid #333;background:transparent;color:#888;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;user-select:none}
+.mp-btn.on{background:#2a2a2a;border-color:#555;color:#fff}.mp-btn:hover{border-color:#555}
+.mp-quick{padding:4px 10px;border-radius:12px;border:1px solid #444;background:transparent;color:#666;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace;transition:all .15s;text-transform:uppercase;letter-spacing:.5px}
+.mp-quick:hover{border-color:#666;color:#aaa}.mp-quick.on{background:#333;border-color:#666;color:#ddd}
+.mp-sep{width:1px;height:20px;background:#333;margin:0 4px}
+.loading{text-align:center;padding:60px 20px;color:#666;font-size:14px}
+.loading-spinner{display:inline-block;width:24px;height:24px;border:2px solid #333;border-top:2px solid #888;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.config-bar{padding:8px 32px;background:#0d0d0d;border-bottom:1px solid #1a1a1a;font-size:10px;color:#444;font-family:'DM Mono',monospace;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.config-bar span{color:#666}
+.config-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px}
+.config-ok{background:#8fbc8f}.config-err{background:#cd5c5c}
+.pos{color:#8fbc8f!important}.neg{color:#cd5c5c!important}
+.explain{margin-top:8px;padding:10px 14px;background:#151515;border:1px solid #2a2a2a;border-radius:8px;font-size:12px;color:#888;line-height:1.6}
+.pw-overlay{position:fixed;inset:0;background:#0a0a0a;z-index:9999;display:flex;align-items:center;justify-content:center;}
+.pw-box{background:#141414;border:1px solid #2a2a2a;border-radius:16px;padding:48px 52px;text-align:center;width:380px;max-width:90vw;}
+.pw-logo{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:#555;font-family:'DM Mono',monospace;margin-bottom:6px;}
+.pw-title{font-size:22px;font-weight:700;color:#fff;margin-bottom:6px;}
+.pw-sub{font-size:12px;color:#555;margin-bottom:32px;font-family:'DM Mono',monospace;}
+.pw-input{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:#e0e0e0;padding:13px 16px;font-size:15px;font-family:'DM Mono',monospace;outline:none;text-align:center;letter-spacing:3px;margin-bottom:12px;transition:border-color .2s;}
+.pw-input:focus{border-color:#666;}
+.pw-input.err{border-color:#cd5c5c;animation:shake .3s;}
+.pw-btn{width:100%;padding:13px;border-radius:10px;border:none;background:#2a2a2a;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;margin-bottom:10px;}
+.pw-btn:hover{background:#3a3a3a;}
+.pw-err{font-size:11px;color:#cd5c5c;font-family:'DM Mono',monospace;height:16px;transition:opacity .2s;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.dl-btn{padding:7px 16px;border-radius:20px;border:1px solid #3a3a3a;background:transparent;color:#aaa;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.dl-btn:hover{border-color:#666;color:#fff;background:#1e1e1e;}
+.dl-btn svg{opacity:.7;}
+.sf-group{margin-bottom:16px}
+.sf-label{display:block;font-size:11px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono',monospace}
+.sf-input,.sf-textarea,.sf-select{width:100%;background:#1e1e1e;border:1px solid #333;border-radius:8px;color:#e0e0e0;padding:10px 14px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+.sf-input:focus,.sf-textarea:focus,.sf-select:focus{border-color:#555}
+.sf-textarea{min-height:100px;resize:vertical}
+.sf-btn{padding:10px 24px;border-radius:8px;border:none;background:#333;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s}
+.sf-btn:hover{background:#444}
+</style>
+</head>
+<body>
+
+<div class="pw-overlay" id="pwOverlay">
+  <div class="pw-box">
+    <div class="pw-logo">Ocean Outdoor Denmark</div>
+    <div class="pw-title">OODK</div>
+    <div class="pw-sub">Enter password to continue</div>
+    <input class="pw-input" id="pwInput" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="off" maxlength="20">
+    <button class="pw-btn" id="pwBtn">Log in</button>
+    <div class="pw-err" id="pwErr">&nbsp;</div>
+  </div>
+</div>
+
+<div class="hdr">
+  <div><div class="hdr-lbl">Ocean Outdoor Denmark</div><h1>OODK &mdash; OOH Spend Dashboard</h1></div>
+  <div class="tabs" id="mainTabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="targets">Target Clients</button>
+    <button class="tab" data-tab="advertisers">All Advertisers</button>
+    <button class="tab" data-tab="support">Support</button>
+  </div>
+    <button class="dl-btn" id="xlsxBtnFilter" onclick="downloadExcel(true)" title="Export only filtered data (current selections)" style="margin-right:6px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h10M7 12h10M7 17h6"/><path d="M3 3h18v18H3z"/></svg>
+      Excel (filter)
+    </button>
+    <button class="dl-btn" id="xlsxBtn" onclick="downloadExcel(false)" title="Export all data (no filters)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Excel (all)
+    </button>
+</div>
+<div class="config-bar" id="statusBar">
+  <span><span class="config-dot config-ok" id="dotData"></span>Data: <span id="dataInfo2"></span></span>
+  <span id="dataInfo"></span><span id="lastUpdated" style="margin-left:auto;color:#888"></span>
+</div>
+
+<div class="tp active" id="tp-overview">
+  <div class="flt">
+    <div style="display:flex;align-items:center;gap:6px"><span class="flt-lbl">Year</span><select class="flt-sel" id="dYear"><option value="All">All</option></select></div>
+    <div style="display:flex;align-items:center;gap:6px"><span class="flt-lbl">Media Vehicle</span><select class="flt-sel" id="dVehicle"><option value="All">All</option></select></div>
+    <div style="display:flex;align-items:center;gap:6px"><span class="flt-lbl">Product Group</span><select class="flt-sel" id="dPG" style="max-width:320px"><option value="All">All</option></select></div>
+    <div style="display:flex;align-items:center;gap:6px;position:relative">
+      <span class="flt-lbl">Advertiser</span>
+      <input class="search-box" id="advSearch" placeholder="All advertisers" autocomplete="off" style="width:220px">
+      <button id="advClear" onclick="clearAdv()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#666;cursor:pointer;font-size:16px;font-family:'DM Sans',sans-serif">&times;</button>
+      <div class="adv-list" id="advDropdown" style="display:none;position:absolute;top:100%;left:88px;width:340px;z-index:100;max-height:320px;margin-top:4px"></div>
+    </div>
+  </div>
+  <div style="padding:10px 32px;background:#131313;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span class="flt-lbl" style="margin-right:2px">Months</span>
+    <div class="mp" id="monthPicker"></div><div class="mp-sep"></div><div class="mp" id="monthQuick"></div>
+  </div>
+  <div class="cnt" id="dashContent"><div class="loading"><div class="loading-spinner"></div><br>Loading data...</div></div>
+</div>
+
+<div class="tp" id="tp-targets">
+  <div class="flt">
+    <div style="display:flex;align-items:center;gap:6px"><span class="flt-lbl">Year</span><select class="flt-sel" id="tYear"></select></div>
+    <div style="display:flex;align-items:center;gap:6px"><span class="flt-lbl">Product Group</span><select class="flt-sel" id="tPG" style="max-width:220px"><option value="All">All</option></select></div>
+    <div style="display:flex;align-items:center;gap:6px"><span class="flt-lbl">Top N</span><select class="flt-sel" id="tTopN"><option value="50">50</option><option value="100">100</option><option value="200" selected>200</option><option value="500">500</option></select></div>
+    <div style="display:flex;align-items:center;gap:6px"><span class="flt-lbl">Min Spend (DKK)</span><input class="flt-sel" id="tMinSpend" type="number" value="25000" style="width:110px"></div>
+    <div style="display:flex;align-items:center;gap:6px"><span class="flt-lbl">Group</span><select class="flt-sel" id="tGroup"><option value="1">1 &mdash; No Ocean Outdoor</option><option value="2">2 &mdash; Below Avg OO Share</option><option value="3">3 &mdash; Above Avg OO Share</option><option value="4">4 &mdash; Total Decliners</option><option value="5">5 &mdash; Ocean Decliners</option></select></div>
+  </div>
+  <div style="padding:10px 32px;background:#131313;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span class="flt-lbl" style="margin-right:2px">Months</span>
+    <div class="mp" id="tgtMonthPicker"></div><div class="mp-sep"></div><div class="mp" id="tgtMonthQuick"></div>
+  </div>
+  <div class="cnt"><div class="kpi-g" id="tgtStats"></div><div class="card ox"><div class="card-t" id="tgtTitle">Target Group 1</div><div class="card-s" id="tgtSub"></div><table id="tgtTable"></table></div></div>
+</div>
+
+<div class="tp" id="tp-advertisers">
+  <div class="flt">
+    <div style="display:flex;align-items:center;gap:6px"><span class="flt-lbl">Year</span><select class="flt-sel" id="aYear"><option value="All">All</option></select></div>
+    <div style="display:flex;align-items:center;gap:6px"><span class="flt-lbl">Media Vehicle</span><select class="flt-sel" id="aVehicle"><option value="All">All</option></select></div>
+    <div style="display:flex;align-items:center;gap:6px"><span class="flt-lbl">Top N</span><select class="flt-sel" id="aTopN"><option value="20">20</option><option value="50" selected>50</option><option value="100">100</option><option value="200">200</option><option value="99999">All</option></select></div>
+    <input class="search-box" id="aSearch" placeholder="Filter advertiser name..." autocomplete="off" style="width:260px">
+  </div>
+  <div class="cnt"><div class="card ox"><div class="card-t" id="advTitle">All Advertisers</div><div class="card-s" id="advSub"></div><table id="advTable"></table></div></div>
+</div>
+
+<div class="tp" id="tp-support">
+  <div class="cnt">
+    <div class="card" style="max-width:560px;margin:0 auto">
+      <div class="card-t" style="font-size:16px;margin-bottom:16px">&#x1F4CB; Support Request Form</div>
+      <div style="background:#1e1e1e;border:1px solid #333;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:11px;color:#888;font-family:'DM Mono',monospace">&#x1F4E7; Sends to: <span style="color:#aaa">alexander.panayioti@oceanoutdoor.se</span></div>
+      <div class="sf-group"><label class="sf-label">Request Type</label><select class="sf-select" id="sType"><option>Question</option><option>Bug Report</option><option>Improvement/Idea</option><option>Data Issue</option><option>Other</option></select></div>
+      <div class="sf-group"><label class="sf-label">Your Name</label><input class="sf-input" id="sName" placeholder="Enter your name"></div>
+      <div class="sf-group"><label class="sf-label">Explanation</label><textarea class="sf-textarea" id="sDesc" placeholder="Describe your request..."></textarea></div>
+      <button class="sf-btn" id="sSubmit">Submit Request</button>
+      <div id="sConfirm" style="display:none;margin-top:14px;padding:10px 14px;background:rgba(143,188,143,.08);border:1px solid #8fbc8f;border-radius:8px;color:#8fbc8f;font-size:12px;font-family:'DM Mono',monospace">&#x2714; Email client opened &mdash; send to complete</div>
+    </div>
+  </div>
+</div>
+
+<div class="cnt"><div class="footer"><span>OODK Dashboard &middot; Source: Fifty5Blue Adfacts &middot; Data: Data.csv</span></div></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// GLOBALS
+// ══════════════════════════════════════════════════════════════
+var RAW = [];            // [{Vehicle,PG,Adv,Year,MonthNr,Spend}]
+var SPEND_MAP = {};       // "yr_mn_vehicle_pg" -> spend
+var VEHICLES = [], PGROUPS = [], ADVNAMES = [], YRS = [];
+var ADVS = [];             // [{name,total}] desc by total spend
+var selAdv = null;
+var MN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var VC = {"Ocean Outdoor":"#4a7ba8","AFA":"#d4d4d4","Bauer Media Outdoor":"#a8a8a8"};
+var YC = {2023:"#555555",2024:"#888888",2025:"#bbbbbb",2026:"#e8e8e8",2027:"#f0d0a0"};
+var OO_VEHICLE = "Ocean Outdoor";
+
+function titleCase(s){ return String(s); }
+
+var fmt=function(v){return new Intl.NumberFormat("da-DK").format(Math.round(v));};
+var fB=function(v){return v.toLocaleString("da-DK",{minimumFractionDigits:2,maximumFractionDigits:2});};
+var fK=function(v){
+  if(Math.abs(v)>=1000000000){return fB(v/1000000000)+" bn.DKK";}
+  if(Math.abs(v)>=1000000){return fmt(v/1000000)+" mDKK";}
+  if(Math.abs(v)>=1000){return fmt(v/1000)+" kDKK";}
+  return fmt(v)+" DKK";
+};
+var pct=function(v){return(v*100).toFixed(1)+"%";};
+var dl=function(v){var s=(v*100).toFixed(1);return v>0?"+"+s+"%":s+"%";};
+
+function getD(yr,mn,veh,pg){return SPEND_MAP[yr+"_"+mn+"_"+veh+"_"+pg]||0;}
+function sumD(yrs,mns,vehs,pgs){var t=0;yrs.forEach(function(y){mns.forEach(function(m){vehs.forEach(function(v){pgs.forEach(function(p){t+=getD(y,m,v,p);});});});});return t;}
+function sumDF(yrs,mns,vehs,pgs){
+  if(!selAdv)return sumD(yrs,mns,vehs,pgs);
+  var ySet=new Set(yrs),mnSet=new Set(mns),vSet=new Set(vehs),pSet=new Set(pgs);
+  var t=0;
+  RAW.forEach(function(r){
+    if(r.Adv!==selAdv)return;
+    if(!ySet.has(r.Year)||!mnSet.has(r.MonthNr)||!vSet.has(r.Vehicle)||!pSet.has(r.PG))return;
+    t+=r.Spend;
+  });
+  return t;
+}
+function calcConc(yrs,mns,vehs,pgs){
+  var vSet=new Set(vehs),pSet=new Set(pgs);
+  var ySet=new Set(yrs),mnSet=new Set(mns);var as={};
+  RAW.forEach(function(r){
+    if(ySet.has(r.Year)&&mnSet.has(r.MonthNr)&&vSet.has(r.Vehicle)&&pSet.has(r.PG)){
+      as[r.Adv]=(as[r.Adv]||0)+r.Spend;
+    }
+  });
+  var v=Object.values(as).filter(function(x){return x>0;}).sort(function(a,b){return b-a;});
+  var t=v.reduce(function(s,x){return s+x;},0);
+  if(t===0)return{t10:0,t20:0,t30:0,uniq:0};
+  var s=function(n){return v.slice(0,n).reduce(function(a,b){return a+b;},0)/t;};
+  return{t10:s(10),t20:s(20),t30:s(30),uniq:v.length};
+}
+function calcConcF(yrs,mns,vehs,pgs){
+  if(!selAdv)return calcConc(yrs,mns,vehs,pgs);
+  var ySet=new Set(yrs),mnSet=new Set(mns),vSet=new Set(vehs),pSet=new Set(pgs);
+  var t=0;
+  RAW.forEach(function(r){
+    if(r.Adv!==selAdv)return;
+    if(!ySet.has(r.Year)||!mnSet.has(r.MonthNr)||!vSet.has(r.Vehicle)||!pSet.has(r.PG))return;
+    t+=r.Spend;
+  });
+  return{t10:0,t20:0,t30:0,uniq:t>0?1:0,advTotal:t};
+}
+
+Chart.defaults.color="#888";Chart.defaults.borderColor="#2a2a2a";Chart.defaults.font.family="'DM Sans',sans-serif";Chart.defaults.font.size=11;
+Chart.defaults.plugins.tooltip.backgroundColor="#1a1a1a";Chart.defaults.plugins.tooltip.borderColor="#444";Chart.defaults.plugins.tooltip.borderWidth=1;Chart.defaults.plugins.tooltip.cornerRadius=8;
+Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.legend.labels.boxHeight=8;
+var C={};function kill(n){if(C[n])C[n].destroy();}
+
+// ══════════════════════════════════════════════════════════════
+// LOAD — fetches Data.csv (same folder, same repo) at runtime.
+// Data.csv is the RAW Adfacts Explorer export, untouched — to
+// update the dashboard you just replace this one file. This
+// function does the parsing that used to be a separate Python
+// step: skip the report's metadata lines, find the real header
+// row, convert Danish-formatted spend ("1234,56") to a number,
+// and pull year/month out of the "2023, 03) Marts" style field.
+// ══════════════════════════════════════════════════════════════
+var DATA_URL = "Data.csv";
+var YEARMONTH_RE = /(\d{4}),\s*(\d{1,2})\)/;
+
+function loadData(){
+  var updEl=document.getElementById("lastUpdated");
+  updEl.innerHTML="\u23F3 Fetching Data.csv...";updEl.style.color="#aaa";
+  document.getElementById("dashContent").innerHTML='<div class="loading"><div class="loading-spinner"></div><br>Loading data...</div>';
+
+  fetch(DATA_URL).then(function(resp){
+    if(!resp.ok) throw new Error("HTTP "+resp.status+" fetching "+DATA_URL);
+    return resp.text();
+  }).then(function(text){
+    parseExport(text);
+  }).catch(function(err){
+    console.error("fetch error:",err);
+    showLoadError("Could not fetch Data.csv: "+err.message);
+  });
+}
+
+function parseExport(text){
+  if(text.charCodeAt(0)===0xFEFF) text=text.slice(1); // strip BOM if present
+  var lines=text.split(/\r?\n/);
+  var headerIdx=-1;
+  for(var i=0;i<lines.length;i++){
+    if(lines[i].indexOf("Spending,")===0){ headerIdx=i; break; }
+  }
+  if(headerIdx<0){
+    showLoadError("Could not find the \u2018Spending,Advertiser,...\u2019 header row in Data.csv. Is this a raw Adfacts Explorer export?");
+    return;
+  }
+  var csvBody=lines.slice(headerIdx).join("\n");
+
+  Papa.parse(csvBody, {
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results){
+      if(!results.data || !results.data.length){
+        showLoadError("Data.csv loaded but contained no rows.");
+        return;
+      }
+      try{
+        RAW = results.data.map(function(r){
+          var spendRaw = (r.Spending!=null ? String(r.Spending) : "").trim().replace(",", ".");
+          var spend = Math.round(parseFloat(spendRaw)||0);
+          var m = YEARMONTH_RE.exec(r.YearMonth||"");
+          if(!m) return null;
+          return {
+            Adv: (r.Advertiser||"").trim(),
+            Vehicle: (r.Mediavehicle||"").trim(),
+            PG: (r.Productgroup||"").trim(),
+            Year: +m[1],
+            MonthNr: +m[2],
+            Spend: spend
+          };
+        }).filter(function(r){ return r && r.Adv && r.Vehicle && r.PG; });
+
+        if(!RAW.length){ showLoadError("Data.csv parsed but no valid rows were found. Check the column headers match the usual Adfacts export."); return; }
+
+        processData();
+        document.getElementById("dotData").className="config-dot config-ok";
+        document.getElementById("dataInfo2").textContent=RAW.length.toLocaleString()+" rows \u00b7 "+ADVNAMES.length+" advertisers";
+
+        initDashboard();
+
+        var updEl=document.getElementById("lastUpdated");
+        var latestYr=Math.max.apply(null,YRS);
+        var latestMn=0;
+        RAW.forEach(function(r){if(r.Year===latestYr&&r.MonthNr>latestMn)latestMn=r.MonthNr;});
+        updEl.innerHTML="\uD83D\uDCC5 Data through "+MN[latestMn-1]+" "+latestYr;
+        updEl.style.color="#8fbc8f";
+      }catch(e){
+        console.error("parseExport error:",e);
+        showLoadError("Could not process Data.csv: "+e.message);
+      }
+    },
+    error: function(err){
+      console.error("Papa.parse error:",err);
+      showLoadError("Could not parse Data.csv: "+(err&&err.message?err.message:"unknown error"));
+    }
+  });
+}
+
+function showLoadError(msg){
+  var updEl=document.getElementById("lastUpdated");
+  document.getElementById("dotData").className="config-dot config-err";
+  document.getElementById("dataInfo2").textContent="load failed";
+  updEl.innerHTML="\u26A0\uFE0F "+msg;
+  updEl.style.color="#cd5c5c";
+  document.getElementById("dashContent").innerHTML='<div class="loading" style="color:#cd5c5c">'+msg+'<br><span style="color:#666;font-size:12px">Make sure Data.csv sits next to index.html in the same GitHub Pages folder.</span></div>';
+}
+
+function processData(){
+  var vSet=new Set(), ySet=new Set(), pSet=new Set();
+  RAW.forEach(function(r){vSet.add(r.Vehicle);ySet.add(r.Year);pSet.add(r.PG);});
+  VEHICLES=Array.from(vSet).sort();
+  YRS=Array.from(ySet).sort();
+  PGROUPS=Array.from(pSet).sort();
+
+  SPEND_MAP={};
+  RAW.forEach(function(r){
+    var k=r.Year+"_"+r.MonthNr+"_"+r.Vehicle+"_"+r.PG;
+    SPEND_MAP[k]=(SPEND_MAP[k]||0)+r.Spend;
+  });
+
+  var advTotals={};
+  RAW.forEach(function(r){ advTotals[r.Adv]=(advTotals[r.Adv]||0)+r.Spend; });
+  ADVNAMES=Object.keys(advTotals).sort();
+  ADVS=Object.entries(advTotals).map(function(e){return {name:e[0], total:e[1]};}).sort(function(a,b){return b.total-a.total;});
+
+  var totalSpend=ADVS.reduce(function(s,a){return s+a.total;},0);
+  document.getElementById("dataInfo").textContent=ADVNAMES.length+" advertisers \u00b7 "+VEHICLES.length+" media vehicles \u00b7 "+PGROUPS.length+" product groups \u00b7 "+fK(totalSpend);
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+function fillSelect(id, items){
+  var sel=document.getElementById(id);
+  items.forEach(function(it){var o=document.createElement("option");o.value=it;o.textContent=it;sel.appendChild(o);});
+}
+
+// Product Group filter: ordered highest \u2192 lowest spend, with the
+// spend value padded out to the right of each option using a
+// monospace font + non-breaking spaces (native <select> options
+// can't be styled with flex/text-align, so this is the practical way
+// to get the numbers to line up toward the right edge).
+function fillPGSelect(id){
+  var pgTotalAll={};
+  RAW.forEach(function(r){ pgTotalAll[r.PG]=(pgTotalAll[r.PG]||0)+r.Spend; });
+  var pgSorted=PGROUPS.slice().sort(function(a,b){ return (pgTotalAll[b]||0)-(pgTotalAll[a]||0); });
+  var maxLen=pgSorted.reduce(function(m,p){ return Math.max(m,p.length); },0);
+  var sel=document.getElementById(id);
+  pgSorted.forEach(function(p){
+    var o=document.createElement("option");
+    o.value=p;
+    var gap=Math.max(2, maxLen-p.length+3);
+    o.textContent=p+"\u00A0".repeat(gap)+fK(pgTotalAll[p]||0);
+    sel.appendChild(o);
+  });
+}
+
+function initDashboard(){
+  fillSelect("dYear", YRS); fillSelect("dVehicle", VEHICLES); fillPGSelect("dPG");
+  fillSelect("aYear", YRS); fillSelect("aVehicle", VEHICLES);
+
+  var tySel=document.getElementById("tYear");
+  YRS.slice().reverse().forEach(function(y,i){var o=document.createElement("option");o.value=y;o.textContent=y;if(i===0)o.selected=true;tySel.appendChild(o);});
+  fillSelect("tPG", PGROUPS);
+
+  bindTabs();
+  buildMP();
+  buildTgtMP();
+  initAdvSearch();
+  initSupportForm();
+
+  ["dYear","dVehicle","dPG"].forEach(function(id){document.getElementById(id).addEventListener("change",renderDash);});
+  ["tYear","tPG","tTopN","tMinSpend","tGroup"].forEach(function(id){document.getElementById(id).addEventListener("change",renderTargets);});
+  document.getElementById("tMinSpend").addEventListener("input",renderTargets);
+  ["aYear","aVehicle","aTopN"].forEach(function(id){document.getElementById(id).addEventListener("change",renderAdvertisers);});
+  document.getElementById("aSearch").addEventListener("input", renderAdvertisers);
+
+  renderDash();
+  renderTargets();
+  renderAdvertisers();
+}
+
+function bindTabs(){
+  document.querySelectorAll("#mainTabs .tab").forEach(function(b){
+    b.addEventListener("click",function(){
+      document.querySelectorAll("#mainTabs .tab").forEach(function(x){x.classList.remove("active");});
+      b.classList.add("active");
+      document.querySelectorAll(".tp").forEach(function(x){x.classList.remove("active");});
+      document.getElementById("tp-"+b.dataset.tab).classList.add("active");
+      if(b.dataset.tab==="targets")renderTargets();
+      if(b.dataset.tab==="advertisers")renderAdvertisers();
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// MONTH PICKERS (overview + target clients, independent state)
+// Click behaviour: if all 12 currently selected, clicking a month
+// selects ONLY that month. Otherwise it toggles (min. 1 selected).
+// ══════════════════════════════════════════════════════════════
+var selMonths=[1,2,3,4,5,6,7,8,9,10,11,12];
+var tgtSelMonths=[1,2,3,4,5,6,7,8,9,10,11,12];
+var PRESETS={All:[1,2,3,4,5,6,7,8,9,10,11,12],YTD:[1],Q1:[1,2,3],Q2:[4,5,6],Q3:[7,8,9],Q4:[10,11,12],H1:[1,2,3,4,5,6],H2:[7,8,9,10,11,12]};
+
+function rebuildYTD(){
+  if(!RAW||!RAW.length)return;
+  var latestYr=0,latestMn=0;
+  RAW.forEach(function(r){
+    if(r.Year>latestYr){latestYr=r.Year;latestMn=r.MonthNr;}
+    else if(r.Year===latestYr&&r.MonthNr>latestMn){latestMn=r.MonthNr;}
+  });
+  if(latestMn>=1&&latestMn<=12){
+    var ytd=[];for(var i=1;i<=latestMn;i++)ytd.push(i);
+    PRESETS.YTD=ytd;
+  }
+}
+
+function buildMP(){
+  rebuildYTD();
+  var mp=document.getElementById("monthPicker");
+  mp.innerHTML=MN.map(function(m,i){return '<button class="mp-btn on" data-mn="'+(i+1)+'">'+m+'</button>';}).join("");
+  mp.querySelectorAll(".mp-btn").forEach(function(b){b.addEventListener("click",function(){
+    var mn=+b.dataset.mn;
+    if(selMonths.length===12){selMonths=[mn];}
+    else if(selMonths.includes(mn)){ if(selMonths.length>1)selMonths=selMonths.filter(function(x){return x!==mn;}); }
+    else{ selMonths.push(mn);selMonths.sort(function(a,b){return a-b;}); }
+    updMP();renderDash();
+  });});
+  var mq=document.getElementById("monthQuick");
+  mq.innerHTML=Object.keys(PRESETS).map(function(k){return '<button class="mp-quick'+(k==="All"?" on":"")+'" data-preset="'+k+'">'+k+'</button>';}).join("");
+  mq.querySelectorAll(".mp-quick").forEach(function(b){b.addEventListener("click",function(){
+    selMonths=PRESETS[b.dataset.preset].slice();updMP();renderDash();
+  });});
+}
+function updMP(){
+  document.querySelectorAll("#monthPicker .mp-btn").forEach(function(b){b.classList.toggle("on",selMonths.includes(+b.dataset.mn));});
+  document.querySelectorAll("#monthQuick .mp-quick").forEach(function(b){
+    var p=PRESETS[b.dataset.preset];b.classList.toggle("on",p.length===selMonths.length&&p.every(function(v){return selMonths.includes(v);}));
+  });
+}
+
+function buildTgtMP(){
+  var mp=document.getElementById("tgtMonthPicker");
+  mp.innerHTML=MN.map(function(m,i){return '<button class="mp-btn on" data-mn="'+(i+1)+'">'+m+'</button>';}).join("");
+  mp.querySelectorAll(".mp-btn").forEach(function(b){b.addEventListener("click",function(){
+    var mn=+b.dataset.mn;
+    if(tgtSelMonths.length===12){tgtSelMonths=[mn];}
+    else if(tgtSelMonths.includes(mn)){ if(tgtSelMonths.length>1)tgtSelMonths=tgtSelMonths.filter(function(x){return x!==mn;}); }
+    else{ tgtSelMonths.push(mn);tgtSelMonths.sort(function(a,b){return a-b;}); }
+    updTgtMP();renderTargets();
+  });});
+  var mq=document.getElementById("tgtMonthQuick");
+  mq.innerHTML=Object.keys(PRESETS).map(function(k){return '<button class="mp-quick'+(k==="All"?" on":"")+'" data-preset="'+k+'">'+k+'</button>';}).join("");
+  mq.querySelectorAll(".mp-quick").forEach(function(b){b.addEventListener("click",function(){
+    tgtSelMonths=PRESETS[b.dataset.preset].slice();updTgtMP();renderTargets();
+  });});
+}
+function updTgtMP(){
+  document.querySelectorAll("#tgtMonthPicker .mp-btn").forEach(function(b){b.classList.toggle("on",tgtSelMonths.includes(+b.dataset.mn));});
+  document.querySelectorAll("#tgtMonthQuick .mp-quick").forEach(function(b){
+    var p=PRESETS[b.dataset.preset];b.classList.toggle("on",p.length===tgtSelMonths.length&&p.every(function(v){return tgtSelMonths.includes(v);}));
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// ADVERTISER SEARCH (overview tab) — every matching advertiser is
+// shown (list scrolls), nothing is capped.
+// ══════════════════════════════════════════════════════════════
+function initAdvSearch(){
+  var input=document.getElementById("advSearch");
+  var dd=document.getElementById("advDropdown");
+  input.addEventListener("input",function(){
+    var q=input.value.trim().toUpperCase();
+    if(!q){dd.style.display="none";return;}
+    var matches=ADVS.filter(function(a){return a.name.toUpperCase().indexOf(q)!==-1;});
+    dd.innerHTML=matches.map(function(a){
+      return '<div class="adv-item"><span>'+a.name+'</span><span class="adv-sp">'+fK(a.total)+'</span></div>';
+    }).join("");
+    dd.querySelectorAll(".adv-item").forEach(function(el,i){
+      el.addEventListener("click",function(){
+        selAdv=matches[i].name;
+        input.value=selAdv;
+        dd.style.display="none";
+        document.getElementById("advClear").style.display="block";
+        renderDash();
+      });
+    });
+    dd.style.display=matches.length?"block":"none";
+  });
+  input.addEventListener("focus",function(){ if(input.value.trim())input.dispatchEvent(new Event("input")); });
+  document.addEventListener("click",function(e){ if(!e.target.closest(".search-box")&&!e.target.closest(".adv-list"))dd.style.display="none"; });
+}
+function clearAdv(){
+  selAdv=null;
+  document.getElementById("advSearch").value="";
+  document.getElementById("advClear").style.display="none";
+  renderDash();
+}
+
+// ══════════════════════════════════════════════════════════════
+// OVERVIEW DASHBOARD
+// ══════════════════════════════════════════════════════════════
+function renderDash(){try{
+  var sy=document.getElementById("dYear").value,sv=document.getElementById("dVehicle").value,sp=document.getElementById("dPG").value;
+  var yrs=sy==="All"?YRS:[+sy];var mns=selMonths;var vehs=sv==="All"?VEHICLES:[sv];var pgs=sp==="All"?PGROUPS:[sp];
+  var total=sumDF(yrs,mns,vehs,pgs);var cc=calcConcF(yrs,mns,vehs,pgs);var avg=cc.uniq>0?total/cc.uniq:0;
+  var mLabel=mns.length===12?"All months":mns.length>6?mns.length+" months":mns.map(function(m){return MN[m-1];}).join(", ");
+  var advLabel=selAdv?(" \u00b7 "+selAdv):"";
+
+  document.getElementById("dashContent").innerHTML='\
+    <div class="kpi-g" id="dKPI"></div>\
+    <div class="row2"><div class="card"><div class="card-t">Spend by Media Vehicle</div><div class="card-s">Yearly comparison (DKK)</div><div class="cc"><canvas id="cYearly"></canvas></div></div>\
+    <div class="card"><div class="card-t">Vehicle Market Share</div><div class="card-s" id="pieLabel">All years</div><div class="pie-l"><canvas id="cPie" style="max-height:260px"></canvas><div class="sh-lg" id="pieLeg"></div></div></div></div>\
+    <div class="card"><div class="card-t">Monthly Spend Trend</div><div class="card-s">Year-over-year (DKK)</div><div class="cc"><canvas id="cTrend"></canvas></div></div>\
+    <div class="card"><div class="card-t">Monthly Spend by Vehicle</div><div class="card-s">Stacked (DKK)</div><div class="cc"><canvas id="cStack"></canvas></div></div>\
+    <div class="card"><div class="card-t">Top 10 Product Groups</div><div class="card-s">By spend, current filter</div><div class="cc"><canvas id="cPG"></canvas></div></div>\
+    <div class="card ox"><div class="card-t">Top Clients</div><div class="card-s" id="topClientsSub">By spend in current filter</div><div style="height:14px"></div><table id="tTopClients"></table></div>\
+    <div class="card ox"><div class="card-t">Yearly Detail by Vehicle</div><div style="height:14px"></div><table id="tYearly"></table></div>\
+    <div class="card ox"><div class="card-t">Vehicle Market Share by Year</div><div class="card-s">Share of total filtered spend</div><div style="height:14px"></div><table id="tShare"></table></div>\
+    <div class="card ox"><div class="card-t">Monthly Detail by Year</div><div style="height:14px"></div><table id="tMonthly"></table></div>\
+    <div class="card"><div class="card-t">Annual Spend Growth</div><div class="card-s">Total per year</div><div class="gb" id="growthB"></div></div>';
+
+  var kpis;
+  if(selAdv){
+    kpis=[{l:"Advertiser Spend",v:fK(total),s:(sy==="All"?"All years":sy)+" \u00b7 "+mLabel+advLabel}];
+    var displayYrs=sy==="All"?YRS:[+sy];
+    displayYrs.forEach(function(y){
+      var val=sumDF([y],mns,vehs,pgs);
+      var prevY=YRS[YRS.indexOf(y)-1];
+      var prevVal=prevY?sumDF([prevY],mns,vehs,pgs):0;
+      var change=prevVal>0?(val-prevVal)/prevVal:null;
+      var changeHtml=change!==null?'<span class="'+(change>=0?"pos":"neg")+'">'+dl(change)+'</span>':'';
+      kpis.push({l:String(y),v:fK(val),s:change!==null?'vs '+prevY+' '+changeHtml:pct(total>0?val/total:0)+' of total'});
+    });
+  }else{
+    kpis=[{l:"Total Spend",v:fK(total),s:(sy==="All"?"All years":sy)+" \u00b7 "+mLabel},{l:"Unique Advertisers",v:fmt(cc.uniq),s:"Active in filter"},{l:"Avg Spend",v:fK(avg),s:"Per advertiser"},{l:"Top 10 Concentration",v:pct(cc.t10),s:"Of total spend"},{l:"Top 20 Concentration",v:pct(cc.t20),s:"Of total spend"},{l:"Top 30 Concentration",v:pct(cc.t30),s:"Of total spend"}];
+  }
+  document.getElementById("dKPI").innerHTML=kpis.map(function(k){return '<div class="kpi"><div class="kpi-l">'+k.l+'</div><div class="kpi-v">'+k.v+'</div><div class="kpi-s">'+k.s+'</div></div>';}).join("");
+
+  var vl=sv==="All"?VEHICLES:[sv];
+  var fMN=MN.filter(function(m,i){return mns.includes(i+1);});
+  var fIdx=mns;
+
+  kill("yearly");
+  C.yearly=new Chart(document.getElementById("cYearly"),{type:"bar",data:{labels:vl,datasets:YRS.map(function(y){return{label:String(y),data:vl.map(function(v){return sumDF([y],mns,[v],pgs);}),backgroundColor:YC[y]||"#ccc",borderRadius:4,borderSkipped:false};})},options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid:{color:"#222"},ticks:{callback:function(v){return fK(v);}}},x:{grid:{color:"#222"}}},plugins:{tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fK(c.raw);}}}}}});
+
+  kill("pie");var gt=0;vl.forEach(function(v){gt+=sumDF(yrs,mns,[v],pgs);});
+  var pv=vl.map(function(v){return sumDF(yrs,mns,[v],pgs);});var ps=pv.map(function(v){return gt>0?v/gt:0;});
+  document.getElementById("pieLabel").textContent=sy==="All"?"All years":sy;
+  C.pie=new Chart(document.getElementById("cPie"),{type:"doughnut",data:{labels:vl,datasets:[{data:pv,backgroundColor:vl.map(function(v){return VC[v]||"#888";}),borderColor:"#1a1a1a",borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:"62%",plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.label+": "+fK(c.raw)+" ("+(ps[c.dataIndex]*100).toFixed(1)+"%)";}}}}}});
+  document.getElementById("pieLeg").innerHTML=vl.map(function(v,i){return '<div class="sh-i"><span class="sh-d" style="background:'+(VC[v]||"#888")+'"></span><span class="sh-n">'+v+'</span><span class="sh-p">'+pct(ps[i])+'</span></div>';}).join("");
+
+  kill("trend");
+  C.trend=new Chart(document.getElementById("cTrend"),{type:"line",data:{labels:fMN,datasets:YRS.map(function(y){return{label:String(y),data:fIdx.map(function(mn){return sumDF([y],[mn],vehs,pgs);}),borderColor:YC[y]||"#ccc",backgroundColor:"transparent",tension:.3,pointRadius:2,borderWidth:2};})},options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid:{color:"#222"},ticks:{callback:function(v){return fK(v);}}},x:{grid:{color:"#1a1a1a"}}},plugins:{tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fK(c.raw);}}}}}});
+
+  kill("stack");
+  C.stack=new Chart(document.getElementById("cStack"),{type:"bar",data:{labels:fMN,datasets:vl.map(function(v){return{label:v,data:fIdx.map(function(mn){return sumDF(yrs,[mn],[v],pgs);}),backgroundColor:VC[v]||"#888",stack:"s",borderRadius:3};})},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:"#222"},ticks:{callback:function(v){return fK(v);}}}},plugins:{tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fK(c.raw);}}}}}});
+
+  kill("pg10");
+  var pgTotals=PGROUPS.map(function(p){return {p:p, v:sumDF(yrs,mns,vehs,[p])};}).sort(function(a,b){return b.v-a.v;}).slice(0,10).reverse();
+  C.pg10=new Chart(document.getElementById("cPG"),{type:"bar",data:{labels:pgTotals.map(function(x){return x.p;}),datasets:[{data:pgTotals.map(function(x){return x.v;}),backgroundColor:"#8b8d93",borderRadius:5,barThickness:14}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,scales:{x:{grid:{color:"#222"},ticks:{callback:function(v){return fK(v);}}},y:{grid:{display:false},ticks:{font:{size:10}}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return fK(c.raw);}}}}}});
+
+  // Yearly Detail by Vehicle
+  var th="<thead><tr><th>Media Vehicle</th>"+YRS.map(function(y){return"<th>"+y+"</th>";}).join("")+"<th>Total</th><th>YoY "+YRS[YRS.length-2]+"</th><th>YoY "+YRS[YRS.length-1]+"</th></tr></thead><tbody>";
+  var tots={};YRS.forEach(function(y){tots[y]=0;});
+  vl.forEach(function(v){var vv={};YRS.forEach(function(y){vv[y]=sumDF([y],mns,[v],pgs);tots[y]+=vv[y];});var t=YRS.reduce(function(s,y){return s+vv[y];},0);
+    var d1=YRS.length>=2&&vv[YRS[YRS.length-2]]>0?(vv[YRS[YRS.length-1]]-vv[YRS[YRS.length-2]])/vv[YRS[YRS.length-2]]:null;
+    var d0=YRS.length>=3&&vv[YRS[YRS.length-3]]>0?(vv[YRS[YRS.length-2]]-vv[YRS[YRS.length-3]])/vv[YRS[YRS.length-3]]:null;
+    th+="<tr><td>"+v+"</td>";YRS.forEach(function(y){th+="<td>"+fmt(vv[y])+"</td>";});
+    th+='<td style="color:#fff;font-weight:600">'+fmt(t)+"</td>";
+    th+='<td class="'+(d0===null?"":d0>=0?"pos":"neg")+'">'+(d0===null?"\u2014":dl(d0))+"</td>";
+    th+='<td class="'+(d1===null?"":d1>=0?"pos":"neg")+'">'+(d1===null?"\u2014":dl(d1))+"</td></tr>";
+  });
+  var gt2=YRS.reduce(function(s,y){return s+tots[y];},0);
+  th+='<tr class="tr-tot"><td>TOTAL</td>';YRS.forEach(function(y){th+="<td>"+fmt(tots[y])+"</td>";});th+='<td style="font-weight:700">'+fmt(gt2)+"</td>";
+  if(YRS.length>=3){var gd0=tots[YRS[YRS.length-3]]>0?(tots[YRS[YRS.length-2]]-tots[YRS[YRS.length-3]])/tots[YRS[YRS.length-3]]:0;th+='<td class="'+(gd0>=0?"pos":"neg")+'">'+dl(gd0)+"</td>";}else th+="<td>\u2014</td>";
+  if(YRS.length>=2){var gd1=tots[YRS[YRS.length-2]]>0?(tots[YRS[YRS.length-1]]-tots[YRS[YRS.length-2]])/tots[YRS[YRS.length-2]]:0;th+='<td class="'+(gd1>=0?"pos":"neg")+'">'+dl(gd1)+"</td>";}else th+="<td>\u2014</td>";
+  th+="</tr></tbody>";document.getElementById("tYearly").innerHTML=th;
+
+  // Vehicle Market Share by Year
+  var msHtml="<thead><tr><th>Media Vehicle</th>"+YRS.map(function(y){return"<th>"+y+"</th>";}).join("")+"</tr></thead><tbody>";
+  var yrTotals={};YRS.forEach(function(y){yrTotals[y]=sumDF([y],mns,VEHICLES,pgs);});
+  VEHICLES.forEach(function(v){
+    msHtml+="<tr><td>"+v+"</td>";
+    YRS.forEach(function(y){
+      var vv=sumDF([y],mns,[v],pgs);
+      var sh=yrTotals[y]>0?vv/yrTotals[y]:0;
+      msHtml+="<td>"+pct(sh)+"</td>";
+    });
+    msHtml+="</tr>";
+  });
+  msHtml+="</tbody>";document.getElementById("tShare").innerHTML=msHtml;
+
+  // Monthly Detail by Year
+  var mt2="<thead><tr><th>Year</th>"+fMN.map(function(m){return"<th>"+m+"</th>";}).join("")+"<th>Total</th></tr></thead><tbody>";
+  YRS.forEach(function(y){var vals=fIdx.map(function(mn){return sumDF([y],[mn],vehs,pgs);});var t=vals.reduce(function(a,b){return a+b;},0);
+    mt2+='<tr><td style="color:#fff;font-weight:600;font-family:\'DM Mono\',monospace">'+y+"</td>";vals.forEach(function(v){mt2+="<td>"+fK(v)+"</td>";});mt2+='<td style="color:#fff;font-weight:600">'+fK(t)+"</td></tr>";});
+  if(YRS.length>=2){for(var di=1;di<YRS.length;di++){var by=YRS[di-1],cy=YRS[di];
+    mt2+='<tr style="background:#151515"><td style="color:#888;font-style:italic;font-family:\'DM Mono\',monospace">\u0394 '+cy+"</td>";
+    fIdx.forEach(function(mn){var vb=sumDF([by],[mn],vehs,pgs),vc=sumDF([cy],[mn],vehs,pgs);var ch=vb>0?(vc-vb)/vb:0;mt2+='<td class="'+(ch>=0?"pos":"neg")+'" style="font-weight:500">'+dl(ch)+"</td>";});
+    var tb=fIdx.reduce(function(s,mn){return s+sumDF([by],[mn],vehs,pgs);},0);var tc=fIdx.reduce(function(s,mn){return s+sumDF([cy],[mn],vehs,pgs);},0);var ch=tb>0?(tc-tb)/tb:0;
+    mt2+='<td class="'+(ch>=0?"pos":"neg")+'" style="font-weight:600">'+dl(ch)+"</td></tr>";}}
+  mt2+="</tbody>";document.getElementById("tMonthly").innerHTML=mt2;
+
+  // Growth bars
+  var tots2=YRS.map(function(y){return fIdx.reduce(function(s,mn){return s+sumDF([y],[mn],vehs,pgs);},0);});var mx=Math.max.apply(null,tots2);
+  document.getElementById("growthB").innerHTML=YRS.map(function(y,i){var t=tots2[i],prev=i>0?tots2[i-1]:null,g=prev?(t-prev)/prev:null;var h=mx>0?(t/mx)*180:0,gc=g!==null?(g>=0?"#8fbc8f":"#cd5c5c"):"#555";
+    return '<div class="gc"><div class="gd" style="color:'+gc+'">'+(g!==null?dl(g):"\u2014")+'</div><div class="gbar" style="height:'+h+'px;background:'+(YC[y]||"#ccc")+'"><span>'+fK(t)+'</span></div><div class="gy">'+y+"</div></div>";}).join("");
+
+  // Top Clients table
+  try{
+    var t10Map={};
+    var prevYr=(sy!=="All" && YRS.indexOf(+sy)>0)?YRS[YRS.indexOf(+sy)-1]:null;
+    var prevMap={};
+    var t10Total=0;
+    RAW.forEach(function(r){
+      if(yrs.indexOf(r.Year)<0)return;
+      if(mns.indexOf(r.MonthNr)<0)return;
+      if(vehs.indexOf(r.Vehicle)<0)return;
+      if(pgs.indexOf(r.PG)<0)return;
+      if(selAdv && r.Adv!==selAdv)return;
+      t10Map[r.Adv]=(t10Map[r.Adv]||0)+r.Spend;
+      t10Total+=r.Spend;
+    });
+    if(prevYr!==null){
+      RAW.forEach(function(r){
+        if(r.Year!==prevYr)return;
+        if(mns.indexOf(r.MonthNr)<0)return;
+        if(vehs.indexOf(r.Vehicle)<0)return;
+        if(pgs.indexOf(r.PG)<0)return;
+        prevMap[r.Adv]=(prevMap[r.Adv]||0)+r.Spend;
+      });
+    }
+    var top10=Object.entries(t10Map).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
+    var tcHtml='<thead><tr><th style="text-align:left">#</th><th style="text-align:left">Client</th><th>Spend</th><th>Share</th>'+(prevYr!==null?'<th>YoY %</th>':'')+'</tr></thead><tbody>';
+    top10.forEach(function(entry,i){
+      var name=entry[0],spend=entry[1];
+      var share=t10Total>0?spend/t10Total:0;
+      var prev=prevMap[name]||0;
+      var yoy=prev>0?(spend-prev)/prev:null;
+      var yoyHtml=prevYr===null?"":(yoy===null?'<td style="color:#666">\u2014</td>':'<td class="'+(yoy>=0?"pos":"neg")+'">'+dl(yoy)+'</td>');
+      tcHtml+='<tr><td style="color:#666;font-family:\'DM Mono\',monospace;text-align:left">'+(i+1)+'</td>'+
+        '<td style="text-align:left;color:#fff">'+name+'</td>'+
+        '<td>'+fK(spend)+'</td>'+
+        '<td>'+pct(share)+'</td>'+
+        yoyHtml+'</tr>';
+    });
+    tcHtml+="</tbody>";
+    document.getElementById("tTopClients").innerHTML=tcHtml;
+    var ctx=[];
+    if(sy!=="All")ctx.push(sy);else ctx.push("All years");
+    if(mns.length<12)ctx.push(mns.length+" months");
+    if(sv!=="All")ctx.push(sv);
+    if(sp!=="All")ctx.push(sp);
+    document.getElementById("topClientsSub").textContent=ctx.join(" \u00b7 ")+(prevYr!==null?" \u00b7 YoY vs "+prevYr:"");
+  }catch(e){console.error("topClients:",e);}
+
+}catch(e){console.error("renderDash error:",e);}}
+
+// ══════════════════════════════════════════════════════════════
+// TARGET CLIENTS — prospecting view: who should Ocean Outdoor pursue?
+// "OO" = spend placed with Ocean Outdoor specifically (vs AFA/Bauer)
+// ══════════════════════════════════════════════════════════════
+function renderTargets(){try{
+  var yr=+document.getElementById("tYear").value;
+  var sp=document.getElementById("tPG").value;
+  var pgs=sp==="All"?PGROUPS:[sp];
+  var pgSet=new Set(pgs);
+  var topN=+document.getElementById("tTopN").value,minSpend=+(document.getElementById("tMinSpend").value||0),group=+document.getElementById("tGroup").value;
+  var mns=tgtSelMonths;
+  var mLabel=mns.length===12?"All months":mns.length>6?mns.length+" months":mns.map(function(m){return MN[m-1];}).join(", ");
+
+  var advSpend={},advOO={};
+  RAW.forEach(function(r){
+    if(!mns.includes(r.MonthNr))return;
+    if(!pgSet.has(r.PG))return;
+    var a=r.Adv;
+    if(!advSpend[a])advSpend[a]={};
+    if(!advOO[a])advOO[a]={};
+    advSpend[a][r.Year]=(advSpend[a][r.Year]||0)+r.Spend;
+    if(r.Vehicle===OO_VEHICLE){
+      advOO[a][r.Year]=(advOO[a][r.Year]||0)+r.Spend;
+    }
+  });
+
+  var advNames=Object.keys(advSpend);
+  var eligible=advNames.filter(function(a){return(advSpend[a][yr]||0)>=minSpend;}).map(function(a){
+    return{Adv:a,spend:advSpend[a],oo:advOO[a]||{}};
+  });
+
+  var totalSpend=0,totalOO=0;
+  eligible.forEach(function(t){totalSpend+=(t.spend[yr]||0);totalOO+=(t.oo[yr]||0);});
+  var avgShare=totalSpend>0?totalOO/totalSpend:0;
+
+  var gs=function(t,y){return t.spend[y]||0;};
+  var go=function(t,y){return t.oo[y]||0;};
+
+  var rows,sf=function(a,b){return gs(b,yr)-gs(a,yr);};
+  var groupTitle,groupDesc,groupExplain,isDecliners=false;
+  if(group===1){
+    rows=eligible.filter(function(t){return go(t,yr)===0;}).sort(sf);
+    groupTitle="Target Group 1: No Ocean Outdoor Spend";
+    groupDesc="Conversion prospects";
+    groupExplain="These advertisers spend with AFA or Bauer Media Outdoor but have zero Ocean Outdoor spend in the selected period. Winning even a small share of their OOH budget would be new revenue.";
+  }else if(group===2){
+    rows=eligible.filter(function(t){var s=gs(t,yr),oo=go(t,yr);return oo>0&&(s>0?oo/s:0)<avgShare;}).sort(sf);
+    groupTitle="Target Group 2: Below Average OO Share";
+    groupDesc="Growth potential";
+    groupExplain="These advertisers already use Ocean Outdoor but their OO share of total OOH spend is below the market average ("+pct(avgShare)+"). The Potential column estimates the upside if they matched the average.";
+  }else if(group===3){
+    rows=eligible.filter(function(t){var s=gs(t,yr),oo=go(t,yr);return oo>0&&(s>0?oo/s:0)>=avgShare;}).sort(sf);
+    groupTitle="Target Group 3: Above Average OO Share";
+    groupDesc="Loyal clients";
+    groupExplain="These advertisers have an Ocean Outdoor share at or above the market average. Focus on retention and protecting these relationships.";
+  }else{
+    isDecliners=true;
+    var isOODecline=(group===5);
+    var prevYr=YRS[YRS.indexOf(yr)-1];
+    if(!prevYr){
+      rows=[];
+      groupTitle=(isOODecline?"Ocean Decliners":"Total Decliners")+": No Previous Year";
+      groupDesc="Select a year with previous data";
+      groupExplain="There is no previous year to compare against for "+yr+". Select a later year to see decliners.";
+    }else{
+      var withChange=eligible.map(function(t){
+        var cur=gs(t,yr),prev=gs(t,prevYr);
+        var curOO=go(t,yr),prevOO=go(t,prevYr);
+        return{Adv:t.Adv,cur:cur,prev:prev,changeSEK:cur-prev,changePct:prev>0?(cur-prev)/prev:0,curOO:curOO,prevOO:prevOO,changeOO:curOO-prevOO};
+      });
+      if(isOODecline){
+        withChange=withChange.filter(function(t){return t.prevOO>0&&t.changeOO<0;});
+        withChange.sort(function(a,b){return a.changeOO-b.changeOO;});
+        groupTitle="Ocean Decliners: "+prevYr+" \u2192 "+yr+" ("+mLabel+")";
+        groupDesc="Advertisers with biggest Ocean Outdoor spend reduction";
+        groupExplain="These advertisers placed less with Ocean Outdoor specifically from "+prevYr+" to "+yr+" for the selected months \u2014 even if their total OOH budget held up. Check whether that spend shifted to AFA or Bauer Media Outdoor.";
+      }else{
+        withChange=withChange.filter(function(t){return t.prev>0&&t.changeSEK<0;});
+        withChange.sort(function(a,b){return a.changeSEK-b.changeSEK;});
+        groupTitle="Total Decliners: "+prevYr+" \u2192 "+yr+" ("+mLabel+")";
+        groupDesc="Advertisers with biggest total spend reduction";
+        groupExplain="These advertisers had the largest drop in total OOH spend from "+prevYr+" to "+yr+" for the selected months. Review whether Ocean Outdoor share was maintained or lost disproportionately.";
+      }
+      rows=withChange;
+    }
+  }
+  rows=rows.slice(0,topN);
+
+  var grpSpend=0,grpOO=0;
+  if(isDecliners){
+    var declineMetric=0;
+    rows.forEach(function(t){declineMetric+=(isOODecline?t.changeOO:t.changeSEK);grpSpend+=t.cur;grpOO+=t.curOO;});
+    document.getElementById("tgtStats").innerHTML=[
+      {l:"Market Avg OO Share",v:pct(avgShare),s:fmt(eligible.length)+" advertisers \u00b7 "+mLabel},
+      {l:"Decliners Found",v:fmt(rows.length),s:"Advertisers with reduced "+(isOODecline?"Ocean Outdoor":"total")+" spend"},
+      {l:isOODecline?"Total OO Decline":"Total Decline",v:fK(Math.abs(declineMetric)),s:"Combined "+(isOODecline?"Ocean Outdoor ":"")+"spend lost YoY"},
+      {l:"Group Current Spend",v:fK(grpSpend),s:"Their "+yr+" total"},
+      {l:"Group OO Spend",v:fK(grpOO),s:"Their "+yr+" Ocean Outdoor"}
+    ].map(function(k){return '<div class="kpi"><div class="kpi-l">'+k.l+'</div><div class="kpi-v">'+k.v+'</div><div class="kpi-s">'+(k.s||"")+'</div></div>';}).join("");
+  }else{
+    rows.forEach(function(t){grpSpend+=gs(t,yr);grpOO+=go(t,yr);});
+    var grpAvgShare=grpSpend>0?grpOO/grpSpend:0;
+    document.getElementById("tgtStats").innerHTML=[
+      {l:"Market Avg OO Share",v:pct(avgShare),s:fmt(eligible.length)+" advertisers \u00b7 "+mLabel},
+      {l:"Group Count",v:fmt(rows.length),s:"In this group (of "+fmt(eligible.length)+")"},
+      {l:"Group Total Spend",v:fK(grpSpend),s:"Total OOH spend in group"},
+      {l:"Group OO Spend",v:fK(grpOO),s:"Ocean Outdoor spend in group"},
+      {l:"Group Avg OO Share",v:pct(grpAvgShare),s:grpAvgShare<avgShare?"\u2193 Below market avg":grpAvgShare>avgShare?"\u2191 Above market avg":"= Market avg"}
+    ].map(function(k){return '<div class="kpi"><div class="kpi-l">'+k.l+'</div><div class="kpi-v">'+k.v+'</div><div class="kpi-s">'+(k.s||"")+'</div></div>';}).join("");
+  }
+
+  document.getElementById("tgtTitle").textContent=groupTitle;
+  document.getElementById("tgtSub").innerHTML=groupDesc+'<div class="explain">'+groupExplain+'</div>';
+
+  var html;
+  if(isDecliners&&rows.length>0){
+    var prevYr2=YRS[YRS.indexOf(yr)-1];
+    html="<thead><tr><th>#</th><th>Advertiser</th><th>Spend "+prevYr2+"</th><th>Spend "+yr+"</th><th>\u0394 DKK</th><th>\u0394 %</th><th>OO "+prevYr2+"</th><th>OO "+yr+"</th><th>\u0394 OO</th></tr></thead><tbody>";
+    rows.forEach(function(t,i){
+      html+='<tr><td style="color:#666;font-family:\'DM Mono\',monospace">'+(i+1)+"</td><td>"+t.Adv+"</td><td>"+fmt(t.prev)+"</td><td>"+fmt(t.cur)+'</td><td class="'+(t.changeSEK>=0?"pos":"neg")+'">'+fmt(t.changeSEK)+'</td><td class="'+(t.changePct>=0?"pos":"neg")+'">'+dl(t.changePct)+"</td><td>"+fmt(t.prevOO)+"</td><td>"+fmt(t.curOO)+'</td><td class="'+(t.changeOO>=0?"pos":"neg")+'">'+fmt(t.changeOO)+"</td></tr>";
+    });
+    html+="</tbody>";
+  }else{
+    html="<thead><tr><th>#</th><th>Advertiser</th><th>Total OOH Spend ("+yr+")</th><th>Ocean Outdoor</th><th>OO Share %</th><th>Potential (DKK)</th></tr></thead><tbody>";
+    rows.forEach(function(t,i){var s=gs(t,yr),oo=go(t,yr),sh=s>0?oo/s:0,pot=s*avgShare-oo;
+      html+='<tr><td style="color:#666;font-family:\'DM Mono\',monospace">'+(i+1)+"</td><td>"+t.Adv+"</td><td>"+fmt(s)+"</td><td>"+fmt(oo)+"</td><td>"+pct(sh)+'</td><td class="'+(pot>0?"pos":"neg")+'">'+fmt(pot)+"</td></tr>";});
+    html+="</tbody>";
+  }
+  document.getElementById("tgtTable").innerHTML=html;
+}catch(e){console.error("renderTargets error:",e);}}
+
+// ══════════════════════════════════════════════════════════════
+// ALL ADVERTISERS TAB
+// ══════════════════════════════════════════════════════════════
+function renderAdvertisers(){
+  var ay=document.getElementById("aYear").value;
+  var av=document.getElementById("aVehicle").value;
+  var topN=parseInt(document.getElementById("aTopN").value);
+  var q=(document.getElementById("aSearch").value||"").trim().toUpperCase();
+  var yrs = ay==="All" ? YRS : [parseInt(ay)];
+  var vehs = av==="All" ? VEHICLES : [av];
+
+  var totals={};
+  RAW.forEach(function(r){
+    if(yrs.indexOf(r.Year)<0||vehs.indexOf(r.Vehicle)<0)return;
+    if(q && r.Adv.toUpperCase().indexOf(q)<0)return;
+    totals[r.Adv]=(totals[r.Adv]||0)+r.Spend;
+  });
+  var list=Object.entries(totals).map(function(e){return {name:e[0], total:e[1]};}).sort(function(a,b){return b.total-a.total;});
+  var grand=list.reduce(function(s,x){return s+x.total;},0)||1;
+  var shown=list.slice(0,topN);
+
+  document.getElementById("advSub").textContent=list.length.toLocaleString()+" advertisers match current filters \u00b7 showing "+shown.length.toLocaleString();
+
+  var rows="<thead><tr><th style='text-align:left'>#</th><th style='text-align:left'>Advertiser</th><th>Total Spend</th><th>Share</th><th>Primary Vehicle</th></tr></thead><tbody>";
+  shown.forEach(function(a,i){
+    var byVeh={};
+    RAW.forEach(function(r){ if(r.Adv===a.name && yrs.indexOf(r.Year)>=0 && vehs.indexOf(r.Vehicle)>=0) byVeh[r.Vehicle]=(byVeh[r.Vehicle]||0)+r.Spend; });
+    var primary=Object.entries(byVeh).sort(function(x,y){return y[1]-x[1];})[0];
+    rows+="<tr><td style='color:#666;font-family:\"DM Mono\",monospace;text-align:left'>"+(i+1)+"</td><td style='text-align:left'>"+a.name+"</td><td>"+fK(a.total)+"</td><td>"+pct(a.total/grand)+"</td><td>"+(primary?primary[0]:"-")+"</td></tr>";
+  });
+  rows+="</tbody>";
+  document.getElementById("advTable").innerHTML=rows;
+}
+
+// ══════════════════════════════════════════════════════════════
+// SUPPORT — mailto form, no local logging
+// ══════════════════════════════════════════════════════════════
+var SUPPORT_EMAIL="alexander.panayioti@oceanoutdoor.se";
+function initSupportForm(){
+  var btn=document.getElementById("sSubmit");
+  if(!btn)return;
+  btn.addEventListener("click",function(){
+    var type=document.getElementById("sType").value;
+    var name=document.getElementById("sName").value.trim();
+    var desc=document.getElementById("sDesc").value.trim();
+    if(!name||!desc){alert("Please fill in your name and a description.");return;}
+    var today=new Date().toISOString().slice(0,10);
+    var subj=encodeURIComponent("[OODK Dashboard] "+type);
+    var body=encodeURIComponent("Request Type: "+type+"\nFrom: "+name+"\nDate: "+today+"\n\nDescription:\n"+desc+"\n\n---\nSent from OODK Dashboard (test version)");
+    window.open("mailto:"+SUPPORT_EMAIL+"?subject="+subj+"&body="+body,"_blank");
+    document.getElementById("sConfirm").style.display="block";
+    document.getElementById("sName").value="";
+    document.getElementById("sDesc").value="";
+    setTimeout(function(){document.getElementById("sConfirm").style.display="none";},6000);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXCEL EXPORT
+// ══════════════════════════════════════════════════════════════
+function downloadExcel(useFilter){
+  if(!window.XLSX){ alert("XLSX library not loaded"); return; }
+  var wb = XLSX.utils.book_new();
+
+  var sy=document.getElementById("dYear").value;
+  var sv=document.getElementById("dVehicle").value;
+  var sp=document.getElementById("dPG").value;
+  var yrFilter=sy==="All"?null:+sy;
+  var vehFilter=sv==="All"?null:sv;
+  var pgFilter=sp==="All"?null:sp;
+  var monthFilter=(selMonths.length<12)?selMonths.slice():null;
+  var advFilter=selAdv?selAdv:null;
+
+  var source=RAW;
+  if(useFilter){
+    source=RAW.filter(function(r){
+      if(yrFilter!==null && r.Year!==yrFilter)return false;
+      if(vehFilter!==null && r.Vehicle!==vehFilter)return false;
+      if(pgFilter!==null && r.PG!==pgFilter)return false;
+      if(monthFilter!==null && monthFilter.indexOf(r.MonthNr)<0)return false;
+      if(advFilter!==null && r.Adv!==advFilter)return false;
+      return true;
+    });
+  }
+
+  var metaRows=[
+    ["Export type", useFilter?"Filtered":"All data"],
+    ["Generated", new Date().toISOString().replace("T"," ").slice(0,19)],
+    ["Rows exported", source.length],
+    ["Year filter", yrFilter===null?"All":String(yrFilter)],
+    ["Media vehicle filter", vehFilter===null?"All":vehFilter],
+    ["Product group filter", pgFilter===null?"All":pgFilter],
+    ["Month filter", monthFilter===null?"All":monthFilter.map(function(m){return MN[m-1];}).join(", ")],
+    ["Advertiser filter", advFilter===null?"All":advFilter]
+  ];
+  var wsMeta=XLSX.utils.aoa_to_sheet(metaRows);
+  wsMeta["!cols"]=[{wch:22},{wch:50}];
+  XLSX.utils.book_append_sheet(wb, wsMeta, "Info");
+
+  var dataRows = [["Advertiser","Year","Month","MonthNr","Media Vehicle","Product Group","Spend (DKK)"]];
+  source.forEach(function(r){
+    var mName = (r.MonthNr>=1 && r.MonthNr<=12) ? MN[r.MonthNr-1] : "";
+    dataRows.push([r.Adv, r.Year, mName, r.MonthNr, r.Vehicle, r.PG, r.Spend]);
+  });
+  var ws1 = XLSX.utils.aoa_to_sheet(dataRows);
+  ws1['!cols'] = [{wch:40},{wch:8},{wch:8},{wch:8},{wch:20},{wch:34},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws1, "Data");
+
+  // Advertiser summary sheet
+  var advTotals={};
+  source.forEach(function(r){ advTotals[r.Adv]=(advTotals[r.Adv]||0)+r.Spend; });
+  var advList=Object.entries(advTotals).sort(function(a,b){return b[1]-a[1];});
+  var advRows=[["Advertiser","Total Spend (DKK)"]];
+  advList.forEach(function(e){advRows.push([e[0],e[1]]);});
+  var ws2=XLSX.utils.aoa_to_sheet(advRows);
+  ws2['!cols']=[{wch:40},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, ws2, "Advertisers");
+
+  var today = new Date().toISOString().slice(0,10).replace(/-/g,"");
+  var suffix=useFilter?"_filtered":"_all";
+  XLSX.writeFile(wb, "OODK_Dashboard_Export"+suffix+"_"+today+".xlsx");
+}
+
+// ══════════════════════════════════════════════════════════════
+// PASSWORD GATE
+// ══════════════════════════════════════════════════════════════
+var PASSWORD = "OODK2026";
+function checkPw(){
+  var v=document.getElementById("pwInput").value;
+  if(v===PASSWORD){
+    document.getElementById("pwOverlay").style.display="none";
+    loadData();
+  }else{
+    document.getElementById("pwErr").textContent="Incorrect password.";
+    var inp=document.getElementById("pwInput");
+    inp.classList.add("err");
+    setTimeout(function(){inp.classList.remove("err");},300);
+  }
+}
+document.getElementById("pwBtn").addEventListener("click",checkPw);
+document.getElementById("pwInput").addEventListener("keydown",function(e){ if(e.key==="Enter")checkPw(); });
+</script>
+</body>
+</html>
